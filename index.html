@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Редактор находок Darwin Core</title>
+<style>
+:root{--bg:#f4f5f2;--panel:#fff;--ink:#1f2a24;--muted:#66726b;--line:#d9ded8;--accent:#2f6b4f;--accent-ink:#fff;--warn:#b3402a;--soft:#e8efe9}
+@media (prefers-color-scheme:dark){:root{--bg:#161a17;--panel:#1f2521;--ink:#e6ebe7;--muted:#97a39b;--line:#333c36;--accent:#5fae88;--accent-ink:#0f1a14;--warn:#e07a62;--soft:#27302a}}
+*{box-sizing:border-box}
+body{margin:0;font:14px/1.4 "Segoe UI",Arial,sans-serif;background:var(--bg);color:var(--ink);height:100vh;display:flex;flex-direction:column}
+header{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 14px;background:var(--panel);border-bottom:1px solid var(--line)}
+header h1{font-size:16px;margin:0 8px 0 0}
+button,select,input,textarea{font:inherit;color:inherit}
+button{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:5px 10px;cursor:pointer}
+button:hover{border-color:var(--accent)}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+button.small{padding:2px 7px;font-size:12px}
+input[type=text],input[type=number],select,textarea{background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:4px 6px}
+label.chk{display:inline-flex;gap:5px;align-items:center;color:var(--muted)}
+.spacer{flex:1}
+main{flex:1;display:flex;min-height:0}
+aside{width:340px;min-width:300px;background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+.tabs{display:flex;border-bottom:1px solid var(--line)}
+.tabs button{flex:1;border:0;border-radius:0;background:none;padding:8px}
+.tabs button.on{border-bottom:2px solid var(--accent);font-weight:600}
+.pane{flex:1;overflow:auto;padding:8px 10px;min-height:0}
+.group>summary{cursor:pointer;font-weight:600;padding:5px 0;color:var(--accent)}
+.field{display:flex;gap:6px;align-items:flex-start;padding:2px 0;cursor:pointer}
+.field:hover{background:var(--soft)}
+.field span{word-break:break-all}
+.field.custom span{font-style:italic}
+#help{border-top:1px solid var(--line);padding:8px 10px;background:var(--soft);min-height:96px;max-height:200px;overflow:auto}
+#help b{color:var(--accent)}
+.ex{color:var(--muted)}
+.content{flex:1;display:flex;flex-direction:column;min-width:0}
+.tablewrap{flex:1;overflow:auto}
+table{border-collapse:separate;border-spacing:0;font-size:13px}
+th{position:sticky;top:0;z-index:2;background:var(--soft);border-bottom:1px solid var(--line);border-right:1px solid var(--line);padding:5px 6px;text-align:left;white-space:nowrap;cursor:help}
+td{border-bottom:1px solid var(--line);border-right:1px solid var(--line);padding:0;background:var(--panel)}
+td input{border:0;border-radius:0;background:transparent;width:100%;min-width:130px;padding:5px 6px}
+td input:focus{outline:2px solid var(--accent);outline-offset:-2px}
+td input.bad,.fld input.bad{background:color-mix(in srgb,var(--warn) 18%,transparent)}
+td.rn,th.rn{position:sticky;left:0;z-index:1;background:var(--soft);padding:2px 6px;white-space:nowrap;color:var(--muted)}
+td.rn{cursor:pointer}
+th.rn{z-index:3}
+tr.flash td{background:color-mix(in srgb,var(--accent) 22%,var(--panel))}
+.status{padding:6px 14px;border-top:1px solid var(--line);background:var(--panel);color:var(--muted);display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+.colrow{display:grid;grid-template-columns:1fr auto;gap:4px;align-items:center;padding:4px 0;border-bottom:1px solid var(--line)}
+.colrow .nm{font-weight:600;word-break:break-all}
+.colrow input{width:100%}
+.box{border:1px solid var(--line);border-radius:6px;padding:8px;margin:8px 0;background:var(--bg)}
+.box h3{margin:0 0 6px;font-size:13px}
+.row{display:flex;gap:6px;align-items:center;margin:4px 0;flex-wrap:wrap}
+.empty{padding:40px;text-align:center;color:var(--muted)}
+.err{color:var(--warn)}
+dialog{border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--ink);padding:0;width:min(940px,96vw);max-height:92vh}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+.dlg{display:flex;flex-direction:column;max-height:92vh}
+.dlg-h{padding:12px 16px;border-bottom:1px solid var(--line);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.dlg-h h2{margin:0;font-size:16px}
+.dlg-b{padding:10px 16px;overflow:auto}
+.dlg-f{padding:10px 16px;border-top:1px solid var(--line);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.dlg-b h4{margin:12px 0 6px;color:var(--accent);font-size:13px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:8px 14px}
+.fld{display:flex;flex-direction:column;gap:1px}
+.fld b{font-size:13px}
+.fld small{color:var(--muted);line-height:1.25}
+.fld input{width:100%}
+.toast{position:fixed;right:16px;bottom:16px;background:var(--accent);color:var(--accent-ink);padding:8px 14px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,.3);display:none;z-index:50}
+</style>
+</head>
+<body>
+<header>
+  <h1>Находки · Darwin Core</h1>
+  <label class="chk">Файл:&nbsp;<select id="fsel" style="min-width:180px"></select></label>
+  <button id="bNewFile" title="Создать новый файл (набор таблицы)">Новый файл</button>
+  <button id="bOpen" title="Открыть существующий .xlsx для дополнения">Открыть .xlsx…</button>
+  <input type="file" id="file" accept=".xlsx,.xls,.csv" hidden>
+  <button id="bDelFile" title="Убрать файл из списка приложения (файл на диске не удаляется)">Убрать из списка</button>
+  <span class="spacer"></span>
+  <select id="preset" title="Добавить готовый набор столбцов в текущий файл"><option value="">Набор столбцов…</option></select>
+  <button id="bCols" title="Добавить/удалить параметры и поменять порядок столбцов текущего файла">Столбцы файла…</button>
+  <button class="primary" id="bOrg">+ Добавить организм</button>
+  <button id="bSave">Сохранить .xlsx</button>
+</header>
+<main>
+  <aside>
+    <div class="tabs"><button id="t1" class="on">Параметры</button><button id="t2">Столбцы</button><button id="t3">Инструменты</button></div>
+    <div class="pane" id="p1">
+      <div class="row"><input type="text" id="search" placeholder="Поиск параметра (на русском или англ.)" style="flex:1"></div>
+      <div class="ex" style="margin:2px 0 6px">Отмеченные параметры — столбцы текущего файла.</div>
+      <div id="groups"></div>
+      <div class="box">
+        <h3>Свой параметр (если в Darwin Core нет подходящего)</h3>
+        <div class="row"><input type="text" id="cName" placeholder="Название, напр. hostFamily" style="flex:1"></div>
+        <div class="row"><textarea id="cDesc" rows="2" placeholder="Что означает этот параметр" style="flex:1"></textarea></div>
+        <div class="row"><input type="text" id="cDef" placeholder="Значение по умолчанию (необязательно)" style="flex:1"><button id="cAdd" class="primary">Добавить</button></div>
+        <div class="err" id="cErr"></div>
+      </div>
+    </div>
+    <div class="pane" id="p2" hidden></div>
+    <div class="pane" id="p3" hidden>
+      <div class="box">
+        <h3>Градусы → десятичные градусы</h3>
+        <div class="row"><input type="number" id="dg" placeholder="°" style="width:62px"><input type="number" id="mn" placeholder="′" style="width:62px"><input type="number" id="sc" placeholder="″" step="any" style="width:70px">
+        <select id="hm"><option value="1">N / E</option><option value="-1">S / W</option></select></div>
+        <div class="row"><b id="dres">—</b><button class="small" id="dcopy">копировать</button></div>
+        <div class="ex">Например 46°42′29″ N → 46.708056. Результат вставьте в decimalLatitude / decimalLongitude.</div>
+      </div>
+      <div class="box">
+        <h3>Нумерация occurrenceID</h3>
+        <div class="row"><input type="text" id="idPrefix" value="OCC-" size="10"><button id="idFill">Заполнить пустые</button></div>
+        <div class="ex">Новая запись получает номер автоматически, если в файле есть столбец occurrenceID.</div>
+      </div>
+    </div>
+    <div id="help"><span class="ex">Наведите курсор на параметр — здесь появится пояснение.</span></div>
+  </aside>
+  <div class="content">
+    <div class="tablewrap" id="tw"></div>
+    <div class="status"><span id="stat"></span><span id="link"></span><label class="chk" id="autoWrap" hidden><input type="checkbox" id="autoW" checked> писать в файл сразу при добавлении</label><span class="spacer"></span><label class="chk"><input type="checkbox" id="fillND" checked> пустые ячейки → n/d</label></div>
+  </div>
+</main>
+
+<dialog id="dlg">
+  <div class="dlg">
+    <div class="dlg-h">
+      <h2 id="dTitle">Новый организм</h2>
+      <label class="chk">Поместить в файл:&nbsp;<select id="dTarget" style="min-width:200px"></select></label>
+      <button class="small" id="dNewFile">+ новый файл</button>
+      <span class="spacer"></span>
+      <select id="dAddField" title="Добавить в форму параметр, которого нет в этом файле"><option value="">+ параметр в этот файл…</option></select>
+    </div>
+    <div class="dlg-b" id="dBody"></div>
+    <div class="dlg-f">
+      <label class="chk" id="dKeepW"><input type="checkbox" id="dKeep"> оставить значения для следующего</label>
+      <span class="spacer"></span>
+      <button id="dCancel">Отмена</button>
+      <button id="dNext" class="primary">Добавить и ввести следующий</button>
+      <button id="dOk" class="primary">Добавить</button>
+    </div>
+  </div>
+</dialog>
+<div class="toast" id="toast"></div>
+<script src="xlsx.full.min.js"></script>
+<script src="dwc-terms.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
